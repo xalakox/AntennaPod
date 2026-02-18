@@ -18,6 +18,7 @@ import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueueStub;
@@ -129,6 +130,56 @@ public class DbReaderNewestPerFeedTest {
         assertEquals(1, DBReader.getTotalEpisodeCount(FeedItemFilter.unfiltered(), true));
     }
 
+    @Test
+    public void testGetEpisodesGlobalDisabledWithPerFeedEnabledOverride() {
+        Feed feedA = createFeed("feed-a");
+        feedA.getItems().add(createItem(feedA, "feed-a-old", 1000L, FeedItem.UNPLAYED));
+        feedA.getItems().add(createItem(feedA, "feed-a-new", 2000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feedA, false);
+
+        Feed feedB = createFeed("feed-b");
+        feedB.getItems().add(createItem(feedB, "feed-b-old", 1500L, FeedItem.UNPLAYED));
+        feedB.getItems().add(createItem(feedB, "feed-b-new", 3000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feedB, false);
+
+        setNewestEpisodesPerFeed(feedA.getId(), FeedPreferences.NewestEpisodesPerFeed.ENABLED);
+
+        List<FeedItem> items = DBReader.getEpisodes(0, 10, FeedItemFilter.unfiltered(),
+                SortOrder.DATE_NEW_OLD, false);
+        Set<String> identifiers = getItemIdentifiers(items);
+
+        assertEquals(3, items.size());
+        assertTrue(identifiers.contains("feed-a-new"));
+        assertTrue(identifiers.contains("feed-b-new"));
+        assertTrue(identifiers.contains("feed-b-old"));
+        assertEquals(3, DBReader.getTotalEpisodeCount(FeedItemFilter.unfiltered(), false));
+    }
+
+    @Test
+    public void testGetEpisodesGlobalEnabledWithPerFeedDisabledOverride() {
+        Feed feedA = createFeed("feed-a");
+        feedA.getItems().add(createItem(feedA, "feed-a-old", 1000L, FeedItem.UNPLAYED));
+        feedA.getItems().add(createItem(feedA, "feed-a-new", 2000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feedA, false);
+
+        Feed feedB = createFeed("feed-b");
+        feedB.getItems().add(createItem(feedB, "feed-b-old", 1500L, FeedItem.UNPLAYED));
+        feedB.getItems().add(createItem(feedB, "feed-b-new", 3000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feedB, false);
+
+        setNewestEpisodesPerFeed(feedA.getId(), FeedPreferences.NewestEpisodesPerFeed.DISABLED);
+
+        List<FeedItem> items = DBReader.getEpisodes(0, 10, FeedItemFilter.unfiltered(),
+                SortOrder.DATE_NEW_OLD, true);
+        Set<String> identifiers = getItemIdentifiers(items);
+
+        assertEquals(3, items.size());
+        assertTrue(identifiers.contains("feed-a-new"));
+        assertTrue(identifiers.contains("feed-a-old"));
+        assertTrue(identifiers.contains("feed-b-new"));
+        assertEquals(3, DBReader.getTotalEpisodeCount(FeedItemFilter.unfiltered(), true));
+    }
+
     private Feed createFeed(String slug) {
         Feed feed = new Feed("https://example.com/" + slug, null, "Feed " + slug);
         feed.setItems(new ArrayList<>());
@@ -157,5 +208,15 @@ public class DbReaderNewestPerFeedTest {
             }
         }
         throw new IllegalStateException("Identifier not found: " + identifier);
+    }
+
+    private void setNewestEpisodesPerFeed(long feedId, FeedPreferences.NewestEpisodesPerFeed mode) {
+        Feed dbFeed = DBReader.getFeed(feedId, false, 0, 0);
+        FeedPreferences preferences = dbFeed.getPreferences();
+        preferences.setNewestEpisodesPerFeed(mode);
+        PodDBAdapter adapter = PodDBAdapter.getInstance();
+        adapter.open();
+        adapter.setFeedPreferences(preferences);
+        adapter.close();
     }
 }

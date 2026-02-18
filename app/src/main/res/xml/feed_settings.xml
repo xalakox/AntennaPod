@@ -79,6 +79,14 @@
             android:title="@string/pref_new_episodes_action_title" />
 
         <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
+            android:entries="@array/feedNewestEpisodesPerFeedItems"
+            android:entryValues="@array/feedNewestEpisodesPerFeedValues"
+            android:icon="@drawable/ic_filter"
+            android:key="feedNewestEpisodesPerFeed"
+            android:summary="@string/global_default"
+            android:title="@string/pref_only_newest_per_feed_title" />
+
+        <de.danoeh.antennapod.ui.preferences.preference.MaterialListPreference
             android:entries="@array/spnEnableAutoDownloadItems"
             android:entryValues="@array/spnEnableAutoDownloadValues"
             android:icon="@drawable/ic_download"

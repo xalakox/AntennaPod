@@ -60,6 +60,27 @@ public class FeedPreferences implements Serializable {
         }
     }
 
+    public enum NewestEpisodesPerFeed {
+        GLOBAL(0),
+        ENABLED(1),
+        DISABLED(2);
+
+        public final int code;
+
+        NewestEpisodesPerFeed(int code) {
+            this.code = code;
+        }
+
+        public static NewestEpisodesPerFeed fromCode(int code) {
+            for (NewestEpisodesPerFeed action : values()) {
+                if (code == action.code) {
+                    return action;
+                }
+            }
+            return GLOBAL;
+        }
+    }
+
     public enum SkipSilence {
         OFF(0), GLOBAL(1), AGGRESSIVE(2);
 
@@ -122,6 +143,7 @@ public class FeedPreferences implements Serializable {
     private int feedSkipEnding;
     private SkipSilence feedSkipSilence;
     private boolean showEpisodeNotification;
+    private NewestEpisodesPerFeed newestEpisodesPerFeed;
     private final Set<String> tags = new HashSet<>();
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, AutoDeleteAction autoDeleteAction,
@@ -129,7 +151,7 @@ public class FeedPreferences implements Serializable {
                            String username, String password) {
         this(feedID, autoDownload, true, autoDeleteAction, volumeAdaptionSetting, username, password,
                 new FeedFilter(), SPEED_USE_GLOBAL, 0, 0, SkipSilence.GLOBAL,
-                false, newEpisodesAction, new HashSet<>());
+                false, newEpisodesAction, new HashSet<>(), NewestEpisodesPerFeed.GLOBAL);
     }
 
     public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, boolean keepUpdated,
@@ -138,6 +160,17 @@ public class FeedPreferences implements Serializable {
                             float feedPlaybackSpeed, int feedSkipIntro, int feedSkipEnding, SkipSilence feedSkipSilence,
                             boolean showEpisodeNotification, NewEpisodesAction newEpisodesAction,
                             Set<String> tags) {
+        this(feedID, autoDownload, keepUpdated, autoDeleteAction, volumeAdaptionSetting, username, password,
+                filter, feedPlaybackSpeed, feedSkipIntro, feedSkipEnding, feedSkipSilence,
+                showEpisodeNotification, newEpisodesAction, tags, NewestEpisodesPerFeed.GLOBAL);
+    }
+
+    public FeedPreferences(long feedID, AutoDownloadSetting autoDownload, boolean keepUpdated,
+                           AutoDeleteAction autoDeleteAction, VolumeAdaptionSetting volumeAdaptionSetting,
+                           String username, String password, @NonNull FeedFilter filter,
+                           float feedPlaybackSpeed, int feedSkipIntro, int feedSkipEnding, SkipSilence feedSkipSilence,
+                           boolean showEpisodeNotification, NewEpisodesAction newEpisodesAction,
+                           Set<String> tags, NewestEpisodesPerFeed newestEpisodesPerFeed) {
         this.feedID = feedID;
         this.autoDownload = autoDownload;
         this.keepUpdated = keepUpdated;
@@ -152,6 +185,7 @@ public class FeedPreferences implements Serializable {
         this.feedSkipSilence = feedSkipSilence;
         this.showEpisodeNotification = showEpisodeNotification;
         this.newEpisodesAction = newEpisodesAction;
+        this.newestEpisodesPerFeed = newestEpisodesPerFeed;
         this.tags.addAll(tags);
     }
 
@@ -235,6 +269,10 @@ public class FeedPreferences implements Serializable {
         return newEpisodesAction;
     }
 
+    public NewestEpisodesPerFeed getNewestEpisodesPerFeed() {
+        return newestEpisodesPerFeed;
+    }
+
     public void setAutoDeleteAction(AutoDeleteAction autoDeleteAction) {
         this.autoDeleteAction = autoDeleteAction;
     }
@@ -245,6 +283,10 @@ public class FeedPreferences implements Serializable {
 
     public void setNewEpisodesAction(NewEpisodesAction newEpisodesAction) {
         this.newEpisodesAction = newEpisodesAction;
+    }
+
+    public void setNewestEpisodesPerFeed(NewestEpisodesPerFeed newestEpisodesPerFeed) {
+        this.newestEpisodesPerFeed = newestEpisodesPerFeed;
     }
 
     public AutoDeleteAction getCurrentAutoDelete() {

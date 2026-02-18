@@ -94,6 +94,18 @@
         <item>2</item>
     </string-array>
 
+    <string-array name="feedNewestEpisodesPerFeedItems">
+        <item>@string/global_default</item>
+        <item>@string/enabled</item>
+        <item>@string/disabled</item>
+    </string-array>
+
+    <string-array name="feedNewestEpisodesPerFeedValues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
     <string-array name="smart_mark_as_played_values">
         <item>0</item>
         <item>15</item>

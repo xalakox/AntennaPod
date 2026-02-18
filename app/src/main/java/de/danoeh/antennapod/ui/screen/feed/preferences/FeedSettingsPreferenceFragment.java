@@ -22,7 +22,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import de.danoeh.antennapod.R;
 import de.danoeh.antennapod.databinding.PlaybackSpeedFeedSettingDialogBinding;
+import de.danoeh.antennapod.event.FeedListUpdateEvent;
 import de.danoeh.antennapod.event.MessageEvent;
+import de.danoeh.antennapod.event.UnreadItemsUpdateEvent;
 import de.danoeh.antennapod.event.settings.SkipIntroEndingChangedEvent;
 import de.danoeh.antennapod.event.settings.SpeedPresetChangedEvent;
 import de.danoeh.antennapod.event.settings.VolumeAdaptionChangedEvent;
@@ -57,6 +59,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
     private static final String PREF_AUTHENTICATION = "authentication";
     private static final String PREF_AUTO_DELETE = "autoDelete";
     private static final String PREF_NEW_EPISODES_ACTION = "feedNewEpisodesAction";
+    private static final String PREF_NEWEST_EPISODES_PER_FEED = "feedNewestEpisodesPerFeed";
     private static final String PREF_FEED_PLAYBACK_SPEED = "feedPlaybackSpeed";
     private static final String PREF_AUTO_SKIP = "feedAutoSkip";
     private static final String PREF_NOTIFICATION = "episodeNotification";
@@ -129,6 +132,7 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
                     updateAutoDeleteSummary();
                     updateAutoDownloadEnabledSummary();
                     updateNewEpisodesActionSummary();
+                    updateNewestEpisodesPerFeedSummary();
 
                     if (feed.isLocalFeed()) {
                         findPreference(PREF_AUTHENTICATION).setVisible(false);
@@ -229,6 +233,15 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
             updateNewEpisodesActionSummary();
             return false;
         });
+        findPreference(PREF_NEWEST_EPISODES_PER_FEED).setOnPreferenceChangeListener((preference, newValue) -> {
+            int code = Integer.parseInt((String) newValue);
+            feedPreferences.setNewestEpisodesPerFeed(FeedPreferences.NewestEpisodesPerFeed.fromCode(code));
+            DBWriter.setFeedPreferences(feedPreferences);
+            updateNewestEpisodesPerFeedSummary();
+            EventBus.getDefault().post(new FeedListUpdateEvent(0));
+            EventBus.getDefault().post(new UnreadItemsUpdateEvent());
+            return false;
+        });
         SwitchPreferenceCompat keepUpdated = findPreference("keepUpdated");
         keepUpdated.setChecked(feedPreferences.getKeepUpdated());
         keepUpdated.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -327,6 +340,22 @@ public class FeedSettingsPreferenceFragment extends PreferenceFragmentCompat {
         };
         autoDownloadPreference.setSummary(summary);
         autoDownloadPreference.setValue("" + feedPreferences.getAutoDownload().code);
+    }
+
+    private void updateNewestEpisodesPerFeedSummary() {
+        if (feed == null || feed.getPreferences() == null) {
+            return;
+        }
+        ListPreference newestEpisodesPerFeed = findPreference(PREF_NEWEST_EPISODES_PER_FEED);
+        boolean enabledGlobally = UserPreferences.isOnlyNewestPerFeedEnabled();
+        String summary = switch (feedPreferences.getNewestEpisodesPerFeed()) {
+            case GLOBAL -> getString(R.string.global_default_with_value,
+                    getString(enabledGlobally ? R.string.enabled : R.string.disabled));
+            case ENABLED -> getString(R.string.enabled);
+            case DISABLED -> getString(R.string.disabled);
+        };
+        newestEpisodesPerFeed.setSummary(summary);
+        newestEpisodesPerFeed.setValue("" + feedPreferences.getNewestEpisodesPerFeed().code);
     }
 
     private boolean showPlaybackSpeedDialog(Preference preference) {
