@@ -50,8 +50,9 @@ public class AutomaticDownloadAlgorithm {
 
                 Log.d(TAG, "Performing auto-dl of undownloaded episodes");
 
+                boolean newestPerFeed = UserPreferences.isOnlyNewestPerFeedEnabled();
                 final List<FeedItem> newItems = DBReader.getEpisodes(0, Integer.MAX_VALUE,
-                        new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD);
+                        new FeedItemFilter(FeedItemFilter.NEW), SortOrder.DATE_NEW_OLD, newestPerFeed);
                 final List<FeedItem> candidates = new ArrayList<>();
                 for (FeedItem newItem : newItems) {
                     FeedPreferences feedPrefs = newItem.getFeed().getPreferences();

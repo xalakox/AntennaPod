@@ -19,6 +19,7 @@ import de.danoeh.antennapod.model.feed.FeedMedia;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.storage.database.DBReader;
 import de.danoeh.antennapod.storage.database.DBWriter;
+import de.danoeh.antennapod.storage.preferences.UserPreferences;
 
 /**
  * Implementation of the EpisodeCleanupAlgorithm interface used by AntennaPod.
@@ -91,8 +92,9 @@ public class APCleanupAlgorithm extends EpisodeCleanupAlgorithm {
     @NonNull
     private List<FeedItem> getCandidates() {
         List<FeedItem> candidates = new ArrayList<>();
+        boolean newestPerFeed = UserPreferences.isOnlyNewestPerFeedEnabled();
         List<FeedItem> downloadedItems = DBReader.getEpisodes(0, Integer.MAX_VALUE,
-                new FeedItemFilter(FeedItemFilter.DOWNLOADED), SortOrder.DATE_NEW_OLD);
+                new FeedItemFilter(FeedItemFilter.DOWNLOADED), SortOrder.DATE_NEW_OLD, newestPerFeed);
 
         Date mostRecentDateForDeletion = calcMostRecentDateForDeletion(new Date());
         for (FeedItem item : downloadedItems) {

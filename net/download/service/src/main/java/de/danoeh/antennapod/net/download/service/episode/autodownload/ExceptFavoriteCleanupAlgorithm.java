@@ -78,8 +78,9 @@ public class ExceptFavoriteCleanupAlgorithm extends EpisodeCleanupAlgorithm {
     @NonNull
     private List<FeedItem> getCandidates() {
         List<FeedItem> candidates = new ArrayList<>();
+        boolean newestPerFeed = UserPreferences.isOnlyNewestPerFeedEnabled();
         List<FeedItem> downloadedItems = DBReader.getEpisodes(0, Integer.MAX_VALUE,
-                new FeedItemFilter(FeedItemFilter.DOWNLOADED), SortOrder.DATE_NEW_OLD);
+                new FeedItemFilter(FeedItemFilter.DOWNLOADED), SortOrder.DATE_NEW_OLD, newestPerFeed);
         for (FeedItem item : downloadedItems) {
             if (item.hasMedia()
                     && item.getMedia().isDownloaded()
@@ -94,7 +95,8 @@ public class ExceptFavoriteCleanupAlgorithm extends EpisodeCleanupAlgorithm {
     public int getDefaultCleanupParameter() {
         int cacheSize = UserPreferences.getEpisodeCacheSize();
         if (cacheSize != UserPreferences.EPISODE_CACHE_SIZE_UNLIMITED) {
-            int downloadedEpisodes = DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.DOWNLOADED));
+            int downloadedEpisodes = DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.DOWNLOADED),
+                    UserPreferences.isOnlyNewestPerFeedEnabled());
             if (downloadedEpisodes > cacheSize) {
                 return downloadedEpisodes - cacheSize;
             }
