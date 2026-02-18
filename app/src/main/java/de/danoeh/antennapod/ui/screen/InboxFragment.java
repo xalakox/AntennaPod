@@ -96,20 +96,23 @@ public class InboxFragment extends EpisodesListFragment {
     @NonNull
     @Override
     protected List<FeedItem> loadData() {
+        boolean newestPerFeed = UserPreferences.isOnlyNewestPerFeedEnabled();
         return DBReader.getEpisodes(0, page * EPISODES_PER_PAGE,
-                new FeedItemFilter(FeedItemFilter.NEW),  UserPreferences.getInboxSortedOrder());
+                new FeedItemFilter(FeedItemFilter.NEW),  UserPreferences.getInboxSortedOrder(), newestPerFeed);
     }
 
     @NonNull
     @Override
     protected List<FeedItem> loadMoreData(int page) {
+        boolean newestPerFeed = UserPreferences.isOnlyNewestPerFeedEnabled();
         return DBReader.getEpisodes((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE,
-                new FeedItemFilter(FeedItemFilter.NEW), UserPreferences.getInboxSortedOrder());
+                new FeedItemFilter(FeedItemFilter.NEW), UserPreferences.getInboxSortedOrder(), newestPerFeed);
     }
 
     @Override
     protected int loadTotalItemCount() {
-        return DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW));
+        return DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW),
+                UserPreferences.isOnlyNewestPerFeedEnabled());
     }
 
     private void removeAllFromInbox() {

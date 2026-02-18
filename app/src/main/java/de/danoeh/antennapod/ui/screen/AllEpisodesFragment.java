@@ -56,20 +56,22 @@ public class AllEpisodesFragment extends EpisodesListFragment {
     @NonNull
     @Override
     protected List<FeedItem> loadData() {
+        boolean newestPerFeed = UserPreferences.isOnlyNewestPerFeedEnabled();
         return DBReader.getEpisodes(0, page * EPISODES_PER_PAGE, getFilter(),
-                UserPreferences.getAllEpisodesSortOrder());
+                UserPreferences.getAllEpisodesSortOrder(), newestPerFeed);
     }
 
     @NonNull
     @Override
     protected List<FeedItem> loadMoreData(int page) {
+        boolean newestPerFeed = UserPreferences.isOnlyNewestPerFeedEnabled();
         return DBReader.getEpisodes((page - 1) * EPISODES_PER_PAGE, EPISODES_PER_PAGE, getFilter(),
-                UserPreferences.getAllEpisodesSortOrder());
+                UserPreferences.getAllEpisodesSortOrder(), newestPerFeed);
     }
 
     @Override
     protected int loadTotalItemCount() {
-        return DBReader.getTotalEpisodeCount(getFilter());
+        return DBReader.getTotalEpisodeCount(getFilter(), UserPreferences.isOnlyNewestPerFeedEnabled());
     }
 
     @Override

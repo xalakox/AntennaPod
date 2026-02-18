@@ -83,6 +83,11 @@
                 android:key="prefGlobalDefaultSortedOrder"
                 android:title="@string/pref_global_default_episode_list_sort_order_title"
                 android:summary="@string/pref_global_default_episode_list_sort_order_sum" />
+        <SwitchPreferenceCompat
+                android:defaultValue="false"
+                android:key="prefOnlyNewestPerFeed"
+                android:summary="@string/pref_only_newest_per_feed_summary"
+                android:title="@string/pref_only_newest_per_feed_title" />
         <Preference
                 android:key="prefSwipe"
                 android:summary="@string/swipeactions_summary"

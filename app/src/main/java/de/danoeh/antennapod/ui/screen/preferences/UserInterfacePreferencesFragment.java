@@ -12,6 +12,7 @@ import androidx.preference.Preference;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 import de.danoeh.antennapod.R;
+import de.danoeh.antennapod.event.FeedListUpdateEvent;
 import de.danoeh.antennapod.event.PlayerStatusEvent;
 import de.danoeh.antennapod.event.UnreadItemsUpdateEvent;
 import de.danoeh.antennapod.storage.preferences.UsageStatistics;
@@ -78,6 +79,12 @@ public class UserInterfacePreferencesFragment extends AnimatedPreferenceFragment
                     dialog.show(getChildFragmentManager(), "SortDialog");
                     return true;
                 }));
+        findPreference(UserPreferences.PREF_ONLY_NEWEST_PER_FEED)
+                .setOnPreferenceChangeListener((preference, newValue) -> {
+                    EventBus.getDefault().post(new FeedListUpdateEvent(0));
+                    EventBus.getDefault().post(new UnreadItemsUpdateEvent());
+                    return true;
+                });
         findPreference(PREF_SWIPE)
                 .setOnPreferenceClickListener(preference -> {
                     ((PreferenceActivity) getActivity()).openScreen(R.xml.preferences_swipe);

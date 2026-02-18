@@ -1106,20 +1106,59 @@ public class PodDBAdapter {
     }
 
     public final Cursor getEpisodesCursor(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder) {
+        return getEpisodesCursor(offset, limit, filter, sortOrder, false);
+    }
+
+    public final Cursor getEpisodesCursor(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder,
+                                          boolean newestPerFeed) {
         String orderByQuery = FeedItemSortQuery.generateFrom(sortOrder);
         String filterQuery = FeedItemFilterQuery.generateFrom(filter);
-        String whereClause = "".equals(filterQuery) ? "" : " WHERE " + filterQuery;
+        String whereConditions = "".equals(filterQuery) ? "" : filterQuery;
+        if (newestPerFeed) {
+            if (!"".equals(whereConditions)) {
+                whereConditions += " AND ";
+            }
+            whereConditions += newestEpisodePerFeedFilter(filter);
+        }
+        String whereClause = "".equals(whereConditions) ? "" : " WHERE " + whereConditions + " ";
         final String query = SELECT_FEED_ITEMS_AND_MEDIA + whereClause
                 + "ORDER BY " +  orderByQuery + " LIMIT " + offset + ", " + limit;
         return db.rawQuery(query, null);
     }
 
     public final Cursor getEpisodeCountCursor(FeedItemFilter filter) {
+        return getEpisodeCountCursor(filter, false);
+    }
+
+    public final Cursor getEpisodeCountCursor(FeedItemFilter filter, boolean newestPerFeed) {
         String filterQuery = FeedItemFilterQuery.generateFrom(filter);
-        String whereClause = "".equals(filterQuery) ? "" : " WHERE " + filterQuery;
+        String whereConditions = "".equals(filterQuery) ? "" : filterQuery;
+        if (newestPerFeed) {
+            if (!"".equals(whereConditions)) {
+                whereConditions += " AND ";
+            }
+            whereConditions += newestEpisodePerFeedFilter(filter);
+        }
+        String whereClause = "".equals(whereConditions) ? "" : " WHERE " + whereConditions;
         final String query = "SELECT count(" + TABLE_NAME_FEED_ITEMS + "." + KEY_ID + ") FROM " + TABLE_NAME_FEED_ITEMS
                 + JOIN_FEED_ITEM_AND_MEDIA + whereClause;
         return db.rawQuery(query, null);
+    }
+
+    private String newestEpisodePerFeedFilter(FeedItemFilter filter) {
+        final String newestItemAlias = "NewestFeedItems";
+        final String newestMediaAlias = "NewestFeedMedia";
+        final String newestJoin = " LEFT JOIN " + TABLE_NAME_FEED_MEDIA + " " + newestMediaAlias
+                + " ON " + newestItemAlias + "." + KEY_ID + "=" + newestMediaAlias + "." + KEY_FEEDITEM + " ";
+        final String newestFilterQuery = FeedItemFilterQuery.generateFrom(filter, newestItemAlias, newestMediaAlias);
+        final String newestFilterAnd = "".equals(newestFilterQuery) ? "" : " AND " + newestFilterQuery;
+        return TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " = (SELECT " + newestItemAlias + "." + KEY_ID
+                + " FROM " + TABLE_NAME_FEED_ITEMS + " " + newestItemAlias
+                + newestJoin
+                + " WHERE " + newestItemAlias + "." + KEY_FEED + " = " + TABLE_NAME_FEED_ITEMS + "." + KEY_FEED
+                + newestFilterAnd
+                + " ORDER BY " + newestItemAlias + "." + KEY_PUBDATE + " DESC, "
+                + newestItemAlias + "." + KEY_ID + " DESC LIMIT 1)";
     }
 
     public final Cursor getFeedEpisodeCountCursor(long feedId, FeedItemFilter filter) {

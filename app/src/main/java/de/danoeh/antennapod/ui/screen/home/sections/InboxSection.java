@@ -123,10 +123,13 @@ public class InboxSection extends HomeSection {
         if (disposable != null) {
             disposable.dispose();
         }
+        boolean newestPerFeed = UserPreferences.isOnlyNewestPerFeedEnabled();
         disposable = Observable.fromCallable(() ->
                         new Pair<>(DBReader.getEpisodes(0, NUM_EPISODES,
-                                new FeedItemFilter(FeedItemFilter.NEW), UserPreferences.getInboxSortedOrder()),
-                                DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW))))
+                                new FeedItemFilter(FeedItemFilter.NEW), UserPreferences.getInboxSortedOrder(),
+                                newestPerFeed),
+                                DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW),
+                                        newestPerFeed)))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(data -> {

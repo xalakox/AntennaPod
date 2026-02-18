@@ -73,6 +73,7 @@ public abstract class UserPreferences {
     // Episode
     public static final String PREF_SORT_ALL_EPISODES = "prefEpisodesSort";
     public static final String PREF_FILTER_ALL_EPISODES = "prefEpisodesFilter";
+    public static final String PREF_ONLY_NEWEST_PER_FEED = "prefOnlyNewestPerFeed";
 
     // Playback
     public static final String PREF_PAUSE_ON_HEADSET_DISCONNECT = "prefPauseOnHeadsetDisconnect";
@@ -888,5 +889,13 @@ public abstract class UserPreferences {
 
     public static void setPrefFilterAllEpisodes(String filter) {
         prefs.edit().putString(PREF_FILTER_ALL_EPISODES, filter).apply();
+    }
+
+    public static boolean isOnlyNewestPerFeedEnabled() {
+        return prefs.getBoolean(PREF_ONLY_NEWEST_PER_FEED, false);
+    }
+
+    public static void setOnlyNewestPerFeedEnabled(boolean enabled) {
+        prefs.edit().putBoolean(PREF_ONLY_NEWEST_PER_FEED, enabled).apply();
     }
 }

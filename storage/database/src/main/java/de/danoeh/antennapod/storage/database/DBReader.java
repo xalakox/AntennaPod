@@ -260,10 +260,23 @@ public final class DBReader {
      */
     @NonNull
     public static List<FeedItem> getEpisodes(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder) {
+        return getEpisodes(offset, limit, filter, sortOrder, false);
+    }
+
+    /**
+     *
+     * @param offset The first episode that should be loaded.
+     * @param limit The maximum number of episodes that should be loaded.
+     * @param filter The filter describing which episodes to filter out.
+     */
+    @NonNull
+    public static List<FeedItem> getEpisodes(int offset, int limit, FeedItemFilter filter, SortOrder sortOrder,
+                                             boolean newestPerFeed) {
         Log.d(TAG, "getRecentlyPublishedEpisodes() called with: offset=" + offset + ", limit=" + limit);
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getEpisodesCursor(offset, limit, filter, sortOrder))) {
+        try (FeedItemCursor cursor = new FeedItemCursor(
+                adapter.getEpisodesCursor(offset, limit, filter, sortOrder, newestPerFeed))) {
             List<FeedItem> items = extractItemlistFromCursor(cursor);
             loadAdditionalFeedItemListData(items);
             return items;
@@ -273,9 +286,13 @@ public final class DBReader {
     }
 
     public static int getTotalEpisodeCount(FeedItemFilter filter) {
+        return getTotalEpisodeCount(filter, false);
+    }
+
+    public static int getTotalEpisodeCount(FeedItemFilter filter, boolean newestPerFeed) {
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        try (Cursor cursor = adapter.getEpisodeCountCursor(filter)) {
+        try (Cursor cursor = adapter.getEpisodeCountCursor(filter, newestPerFeed)) {
             if (cursor.moveToFirst()) {
                 return cursor.getInt(0);
             }

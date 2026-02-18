@@ -1,5 +1,6 @@
 package de.danoeh.antennapod.storage.database.mapper;
 
+import de.danoeh.antennapod.model.feed.Feed;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.storage.database.PodDBAdapter;
 
@@ -19,16 +20,27 @@ public class FeedItemFilterQuery {
      *         empty string if there is nothing to filter
      */
     public static String generateFrom(FeedItemFilter filter) {
+        return generateFrom(filter, PodDBAdapter.TABLE_NAME_FEED_ITEMS, PodDBAdapter.TABLE_NAME_FEED_MEDIA);
+    }
+
+    /**
+     * Express the filter using an SQL boolean statement that can be inserted into an SQL WHERE clause.
+     * Allows table aliases for correlated subqueries.
+     */
+    public static String generateFrom(FeedItemFilter filter, String itemTable, String mediaTable) {
         // The keys used within this method, but explicitly combined with their table
-        String keyRead = PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_READ;
-        String keyPosition = PodDBAdapter.TABLE_NAME_FEED_MEDIA + "." + PodDBAdapter.KEY_POSITION;
-        String keyCompletionDate = PodDBAdapter.TABLE_NAME_FEED_MEDIA + "." + PodDBAdapter.KEY_LAST_PLAYED_TIME_HISTORY;
-        String keyDownloaded = PodDBAdapter.TABLE_NAME_FEED_MEDIA + "." + PodDBAdapter.KEY_DOWNLOAD_DATE;
-        String keyMediaId = PodDBAdapter.TABLE_NAME_FEED_MEDIA + "." + PodDBAdapter.KEY_ID;
-        String keyItemId = PodDBAdapter.TABLE_NAME_FEED_ITEMS + "." + PodDBAdapter.KEY_ID;
+        String keyRead = itemTable + "." + PodDBAdapter.KEY_READ;
+        String keyPosition = mediaTable + "." + PodDBAdapter.KEY_POSITION;
+        String keyCompletionDate = mediaTable + "." + PodDBAdapter.KEY_LAST_PLAYED_TIME_HISTORY;
+        String keyDownloaded = mediaTable + "." + PodDBAdapter.KEY_DOWNLOAD_DATE;
+        String keyMediaId = mediaTable + "." + PodDBAdapter.KEY_ID;
+        String keyItemId = itemTable + "." + PodDBAdapter.KEY_ID;
         String keyFeedItem = PodDBAdapter.KEY_FEEDITEM;
         String tableQueue = PodDBAdapter.TABLE_NAME_QUEUE;
         String tableFavorites = PodDBAdapter.TABLE_NAME_FAVORITES;
+        String whereFeedIsSubscribed = itemTable + "." + PodDBAdapter.KEY_FEED
+                + " IN (SELECT " + PodDBAdapter.KEY_ID + " FROM " + PodDBAdapter.TABLE_NAME_FEEDS
+                + " WHERE " + PodDBAdapter.KEY_STATE + "=" + Feed.STATE_SUBSCRIBED + ")";
 
         List<String> statements = new ArrayList<>();
         if (filter.showPlayed) {
@@ -67,7 +79,7 @@ public class FeedItemFilterQuery {
             statements.add(keyCompletionDate + " > 0 ");
         }
         if (!filter.includeNotSubscribed) {
-            statements.add(PodDBAdapter.SELECT_WHERE_FEED_IS_SUBSCRIBED);
+            statements.add(whereFeedIsSubscribed);
         }
 
         if (statements.isEmpty()) {
