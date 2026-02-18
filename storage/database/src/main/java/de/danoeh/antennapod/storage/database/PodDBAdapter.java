@@ -1157,8 +1157,15 @@ public class PodDBAdapter {
         final String newestMediaAlias = "NewestFeedMedia";
         final String newestJoin = " LEFT JOIN " + TABLE_NAME_FEED_MEDIA + " " + newestMediaAlias
                 + " ON " + newestItemAlias + "." + KEY_ID + "=" + newestMediaAlias + "." + KEY_FEEDITEM + " ";
-        final String newestFilterQuery = FeedItemFilterQuery.generateFrom(filter, newestItemAlias, newestMediaAlias);
-        final String newestFilterAnd = "".equals(newestFilterQuery) ? "" : " AND " + newestFilterQuery;
+        // For "new" filters (Inbox), newest-per-feed should use the absolute newest episode.
+        // If that absolute newest is not NEW anymore, the feed is excluded from Inbox.
+        final String newestFilterAnd;
+        if (filter.showNew) {
+            newestFilterAnd = "";
+        } else {
+            final String newestFilterQuery = FeedItemFilterQuery.generateFrom(filter, newestItemAlias, newestMediaAlias);
+            newestFilterAnd = "".equals(newestFilterQuery) ? "" : " AND " + newestFilterQuery;
+        }
         return TABLE_NAME_FEED_ITEMS + "." + KEY_ID + " = (SELECT " + newestItemAlias + "." + KEY_ID
                 + " FROM " + TABLE_NAME_FEED_ITEMS + " " + newestItemAlias
                 + newestJoin

@@ -85,7 +85,7 @@ public class DbReaderNewestPerFeedTest {
     }
 
     @Test
-    public void testGetEpisodesNewestPerFeedRespectsNewFilter() {
+    public void testGetEpisodesNewestPerFeedUsesAbsoluteNewestForNewFilter() {
         Feed feedA = createFeed("feed-a");
         feedA.getItems().add(createItem(feedA, "feed-a-new", 1000L, FeedItem.NEW));
         feedA.getItems().add(createItem(feedA, "feed-a-unplayed-newer", 2000L, FeedItem.UNPLAYED));
@@ -103,10 +103,9 @@ public class DbReaderNewestPerFeedTest {
         List<FeedItem> grouped = DBReader.getEpisodes(0, 10, newOnly, SortOrder.DATE_NEW_OLD, true);
         Set<String> identifiers = getItemIdentifiers(grouped);
 
-        assertEquals(2, grouped.size());
-        assertTrue(identifiers.contains("feed-a-new"));
+        assertEquals(1, grouped.size());
         assertTrue(identifiers.contains("feed-b-new"));
-        assertEquals(2, DBReader.getTotalEpisodeCount(newOnly, true));
+        assertEquals(1, DBReader.getTotalEpisodeCount(newOnly, true));
     }
 
     @Test
@@ -178,6 +177,29 @@ public class DbReaderNewestPerFeedTest {
         assertTrue(identifiers.contains("feed-a-old"));
         assertTrue(identifiers.contains("feed-b-new"));
         assertEquals(3, DBReader.getTotalEpisodeCount(FeedItemFilter.unfiltered(), true));
+    }
+
+    @Test
+    public void testGetEpisodesNewFilterRespectsPerFeedDisabledOverride() {
+        Feed feedA = createFeed("feed-a");
+        feedA.getItems().add(createItem(feedA, "feed-a-new", 1000L, FeedItem.NEW));
+        feedA.getItems().add(createItem(feedA, "feed-a-unplayed-newer", 2000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feedA, false);
+
+        Feed feedB = createFeed("feed-b");
+        feedB.getItems().add(createItem(feedB, "feed-b-new", 1500L, FeedItem.NEW));
+        FeedDatabaseWriter.updateFeed(context, feedB, false);
+
+        setNewestEpisodesPerFeed(feedA.getId(), FeedPreferences.NewestEpisodesPerFeed.DISABLED);
+
+        FeedItemFilter newOnly = new FeedItemFilter(FeedItemFilter.NEW);
+        List<FeedItem> items = DBReader.getEpisodes(0, 10, newOnly, SortOrder.DATE_NEW_OLD, true);
+        Set<String> identifiers = getItemIdentifiers(items);
+
+        assertEquals(2, items.size());
+        assertTrue(identifiers.contains("feed-a-new"));
+        assertTrue(identifiers.contains("feed-b-new"));
+        assertEquals(2, DBReader.getTotalEpisodeCount(newOnly, true));
     }
 
     private Feed createFeed(String slug) {
