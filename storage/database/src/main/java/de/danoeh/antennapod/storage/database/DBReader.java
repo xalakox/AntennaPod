@@ -701,6 +701,20 @@ public final class DBReader {
     @NonNull
     public static NavDrawerData getNavDrawerData(@Nullable SubscriptionsFilter subscriptionsFilter,
                                                  FeedOrder feedOrder, FeedCounter feedCounter, int feedState) {
+        return getNavDrawerData(subscriptionsFilter, feedOrder, feedCounter, feedState, false);
+    }
+
+    /**
+     * Returns data necessary for displaying the navigation drawer. This includes
+     * the list of subscriptions, the number of items in the queue and the number of unread
+     * items.
+     *
+     * @param newestPerFeed Whether unread counts should use newest-per-feed filtering.
+     */
+    @NonNull
+    public static NavDrawerData getNavDrawerData(@Nullable SubscriptionsFilter subscriptionsFilter,
+                                                 FeedOrder feedOrder, FeedCounter feedCounter, int feedState,
+                                                 boolean newestPerFeed) {
         PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
 
@@ -773,7 +787,7 @@ public final class DBReader {
 
         Collections.sort(feeds, comparator);
         final int queueSize = adapter.getQueueSize();
-        final int numNewItems = getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW));
+        final int numNewItems = getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW), newestPerFeed);
         final int numDownloadedItems = getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.DOWNLOADED));
 
         NavDrawerData.TagItem untaggedTag = new NavDrawerData.TagItem(FeedPreferences.TAG_UNTAGGED);

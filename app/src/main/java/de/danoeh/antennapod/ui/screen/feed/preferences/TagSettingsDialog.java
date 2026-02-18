@@ -115,7 +115,7 @@ public class TagSettingsDialog extends DialogFragment {
         Observable.fromCallable(
                 () -> {
                     NavDrawerData data = DBReader.getNavDrawerData(null, FeedOrder.ALPHABETICAL, FeedCounter.SHOW_NONE,
-                            Feed.STATE_SUBSCRIBED);
+                            Feed.STATE_SUBSCRIBED, UserPreferences.isOnlyNewestPerFeedEnabled());
                     List<String> folders = new ArrayList<>();
                     for (NavDrawerData.TagItem item : data.tags) {
                         if (!FeedPreferences.TAG_ROOT.equals(item.getTitle())

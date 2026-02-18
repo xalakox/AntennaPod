@@ -15,9 +15,11 @@ import java.util.List;
 import java.util.Set;
 
 import de.danoeh.antennapod.model.feed.Feed;
+import de.danoeh.antennapod.model.feed.FeedCounter;
 import de.danoeh.antennapod.model.feed.FeedItem;
 import de.danoeh.antennapod.model.feed.FeedItemFilter;
 import de.danoeh.antennapod.model.feed.FeedMedia;
+import de.danoeh.antennapod.model.feed.FeedOrder;
 import de.danoeh.antennapod.model.feed.FeedPreferences;
 import de.danoeh.antennapod.model.feed.SortOrder;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
@@ -200,6 +202,26 @@ public class DbReaderNewestPerFeedTest {
         assertTrue(identifiers.contains("feed-a-new"));
         assertTrue(identifiers.contains("feed-b-new"));
         assertEquals(2, DBReader.getTotalEpisodeCount(newOnly, true));
+    }
+
+    @Test
+    public void testNavDrawerDataNewCountRespectsNewestPerFeedSetting() {
+        Feed feedA = createFeed("feed-a");
+        feedA.getItems().add(createItem(feedA, "feed-a-new", 1000L, FeedItem.NEW));
+        feedA.getItems().add(createItem(feedA, "feed-a-unplayed-newer", 2000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feedA, false);
+
+        Feed feedB = createFeed("feed-b");
+        feedB.getItems().add(createItem(feedB, "feed-b-new", 1500L, FeedItem.NEW));
+        FeedDatabaseWriter.updateFeed(context, feedB, false);
+
+        NavDrawerData groupedData = DBReader.getNavDrawerData(null, FeedOrder.ALPHABETICAL, FeedCounter.SHOW_NONE,
+                Feed.STATE_SUBSCRIBED, true);
+        NavDrawerData ungroupedData = DBReader.getNavDrawerData(null, FeedOrder.ALPHABETICAL, FeedCounter.SHOW_NONE,
+                Feed.STATE_SUBSCRIBED, false);
+
+        assertEquals(1, groupedData.numNewItems);
+        assertEquals(2, ungroupedData.numNewItems);
     }
 
     private Feed createFeed(String slug) {

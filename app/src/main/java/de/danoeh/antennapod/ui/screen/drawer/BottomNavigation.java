@@ -73,7 +73,8 @@ public class BottomNavigation {
             bottomNavigationBadgeLoader.dispose();
         }
         bottomNavigationBadgeLoader = Observable.fromCallable(
-                        () -> DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW)))
+                        () -> DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW),
+                                UserPreferences.isOnlyNewestPerFeedEnabled()))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(result -> {

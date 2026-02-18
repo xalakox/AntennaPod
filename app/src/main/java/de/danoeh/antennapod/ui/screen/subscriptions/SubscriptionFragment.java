@@ -373,7 +373,7 @@ public class SubscriptionFragment extends Fragment
                         () -> {
                             NavDrawerData navDrawerData = DBReader.getNavDrawerData(filter,
                                     UserPreferences.getFeedOrder(), UserPreferences.getFeedCounterSetting(),
-                                    stateToShow);
+                                    stateToShow, UserPreferences.isOnlyNewestPerFeedEnabled());
                             List<NavDrawerData.TagItem> tags = DBReader.getAllTags(stateToShow);
                             return new Pair<>(navDrawerData, tags);
                         })

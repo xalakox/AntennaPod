@@ -427,7 +427,7 @@ public class NavDrawerFragment extends Fragment implements SharedPreferences.OnS
                 () -> {
                     NavDrawerData data = DBReader.getNavDrawerData(UserPreferences.getSubscriptionsFilter(),
                             UserPreferences.getFeedOrder(), UserPreferences.getFeedCounterSetting(),
-                            Feed.STATE_SUBSCRIBED);
+                            Feed.STATE_SUBSCRIBED, UserPreferences.isOnlyNewestPerFeedEnabled());
                     reclaimableSpace = EpisodeCleanupAlgorithmFactory.build().getReclaimableItems();
                     return new Pair<>(data, makeFlatDrawerData(data.tags, data.feedCounters));
                 })
