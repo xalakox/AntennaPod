@@ -368,7 +368,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
     private void loadQueueForMediaSession() {
         Disposable d = Single.<List<MediaSessionCompat.QueueItem>>create(emitter -> {
             List<MediaSessionCompat.QueueItem> queueItems = new ArrayList<>();
-            for (FeedItem feedItem : DBReader.getQueue()) {
+            for (FeedItem feedItem : DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled())) {
                 if (feedItem.getMedia() != null) {
                     MediaDescriptionCompat mediaDescription = feedItem.getMedia().getMediaItem().getDescription();
                     queueItems.add(new MediaSessionCompat.QueueItem(mediaDescription, feedItem.getId()));
@@ -477,7 +477,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
 
         List<FeedItem> feedItems;
         if (parentId.equals(getResources().getString(R.string.queue_label))) {
-            feedItems = DBReader.getQueue();
+            feedItems = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
         } else if (parentId.equals(getResources().getString(R.string.downloads_label))) {
             feedItems = DBReader.getEpisodes(0, MAX_ANDROID_AUTO_EPISODES_PER_FEED,
                     new FeedItemFilter(FeedItemFilter.DOWNLOADED), UserPreferences.getDownloadsSortedOrder());
@@ -1084,7 +1084,7 @@ public class PlaybackService extends MediaBrowserServiceCompat {
             return null;
         }
         FeedItem nextItem;
-        nextItem = DBReader.getNextInQueue(item);
+        nextItem = DBReader.getNextInQueue(item, UserPreferences.isOnlyNewestPerFeedEnabled());
 
         if (nextItem == null || nextItem.getMedia() == null) {
             PlaybackPreferences.writeNoMediaPlaying();

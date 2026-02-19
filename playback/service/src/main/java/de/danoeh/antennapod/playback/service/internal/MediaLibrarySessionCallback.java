@@ -331,7 +331,7 @@ public class MediaLibrarySessionCallback implements MediaLibraryService.MediaLib
                         return DBReader.getFeed(feedId, true, page * pageSize, pageSize).getItems();
                     }
                     return switch (parentId) {
-                        case MEDIA_ID_QUEUE -> DBReader.getQueue();
+                        case MEDIA_ID_QUEUE -> DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
                         case MEDIA_ID_DOWNLOADS -> DBReader.getEpisodes(page * pageSize, pageSize,
                                 new FeedItemFilter(FeedItemFilter.DOWNLOADED),
                                 UserPreferences.getDownloadsSortedOrder());

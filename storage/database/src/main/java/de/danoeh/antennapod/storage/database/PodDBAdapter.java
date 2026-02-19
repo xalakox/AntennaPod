@@ -1452,6 +1452,28 @@ public class PodDBAdapter {
         return result;
     }
 
+    public final Map<Long, Long> getNewestItemIds(Set<Long> feedIds) {
+        Map<Long, Long> result = new HashMap<>();
+        if (feedIds.isEmpty()) {
+            return result;
+        }
+        final String query = "SELECT fi." + KEY_FEED + ", fi." + KEY_ID
+                + " FROM " + TABLE_NAME_FEED_ITEMS + " fi"
+                + " WHERE fi." + KEY_FEED + " IN (" + TextUtils.join(",", feedIds) + ")"
+                + " AND fi." + KEY_ID + " = (SELECT newest." + KEY_ID
+                    + " FROM " + TABLE_NAME_FEED_ITEMS + " newest"
+                    + " WHERE newest." + KEY_FEED + " = fi." + KEY_FEED
+                    + " ORDER BY newest." + KEY_PUBDATE + " DESC, newest." + KEY_ID + " DESC LIMIT 1)";
+        Cursor c = db.rawQuery(query, null);
+        if (c.moveToFirst()) {
+            do {
+                result.put(c.getLong(0), c.getLong(1));
+            } while (c.moveToNext());
+        }
+        c.close();
+        return result;
+    }
+
     /**
      * Uses DatabaseUtils to escape a search query and removes ' at the
      * beginning and the end of the string returned by the escape method.

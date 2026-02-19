@@ -426,7 +426,7 @@ public class Media3PlaybackService extends MediaLibraryService {
             return;
         }
         queueLoaderDisposable = Single.fromCallable(() -> {
-            FeedItem nextItem = DBReader.getNextInQueue(item);
+            FeedItem nextItem = DBReader.getNextInQueue(item, UserPreferences.isOnlyNewestPerFeedEnabled());
             return nextItem != null && nextItem.getMedia() != null ? nextItem.getMedia() : null;
         })
                 .subscribeOn(Schedulers.io())

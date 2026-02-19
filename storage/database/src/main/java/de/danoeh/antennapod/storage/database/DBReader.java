@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.danoeh.antennapod.model.feed.Chapter;
 import de.danoeh.antennapod.model.feed.Feed;
@@ -223,6 +225,17 @@ public final class DBReader {
      */
     @NonNull
     public static List<FeedItem> getQueue() {
+        return getQueue(false);
+    }
+
+    /**
+     * Loads a list of the FeedItems in the queue. If newest-per-feed is enabled, older unstarted
+     * items are filtered out for affected feeds.
+     *
+     * @return A list of FeedItems sorted by the same order as the queue.
+     */
+    @NonNull
+    public static List<FeedItem> getQueue(boolean newestPerFeed) {
         Log.d(TAG, "getQueue() called");
 
         PodDBAdapter adapter = PodDBAdapter.getInstance();
@@ -230,9 +243,52 @@ public final class DBReader {
         try (FeedItemCursor cursor = new FeedItemCursor(adapter.getQueueCursor())) {
             List<FeedItem> items = extractItemlistFromCursor(cursor);
             loadAdditionalFeedItemListData(items);
-            return items;
+            return filterQueueNewestPerFeed(items, newestPerFeed, adapter);
         } finally {
             adapter.close();
+        }
+    }
+
+    @NonNull
+    private static List<FeedItem> filterQueueNewestPerFeed(List<FeedItem> items, boolean globalNewestPerFeed,
+                                                           PodDBAdapter adapter) {
+        Set<Long> feedsWithNewestPolicy = new HashSet<>();
+        for (FeedItem item : items) {
+            if (isNewestPerFeedApplicable(item.getFeed(), globalNewestPerFeed)) {
+                feedsWithNewestPolicy.add(item.getFeedId());
+            }
+        }
+        if (feedsWithNewestPolicy.isEmpty()) {
+            return items;
+        }
+
+        Map<Long, Long> newestItemIds = adapter.getNewestItemIds(feedsWithNewestPolicy);
+        List<FeedItem> filtered = new ArrayList<>(items.size());
+        for (FeedItem item : items) {
+            if (!feedsWithNewestPolicy.contains(item.getFeedId())) {
+                filtered.add(item);
+                continue;
+            }
+            Long newestItemId = newestItemIds.get(item.getFeedId());
+            if (newestItemId == null || newestItemId == item.getId() || item.isInProgress()) {
+                filtered.add(item);
+            }
+        }
+        return filtered;
+    }
+
+    private static boolean isNewestPerFeedApplicable(@Nullable Feed feed, boolean globalNewestPerFeed) {
+        if (feed == null || feed.getPreferences() == null) {
+            return false;
+        }
+        switch (feed.getPreferences().getNewestEpisodesPerFeed()) {
+            case ENABLED:
+                return true;
+            case DISABLED:
+                return false;
+            case GLOBAL:
+            default:
+                return globalNewestPerFeed;
         }
     }
 
@@ -442,21 +498,32 @@ public final class DBReader {
      */
     @Nullable
     public static FeedItem getNextInQueue(FeedItem item) {
+        return getNextInQueue(item, false);
+    }
+
+    /**
+     * Get next feed item in queue following a particular feeditem.
+     *
+     * @param item The FeedItem
+     * @param newestPerFeed Whether queue filtering should apply newest-per-feed rules.
+     * @return The FeedItem next in queue or null if the FeedItem could not be found.
+     */
+    @Nullable
+    public static FeedItem getNextInQueue(FeedItem item, boolean newestPerFeed) {
         Log.d(TAG, "getNextInQueue() called with: " + "itemId = [" + item.getId() + "]");
-        PodDBAdapter adapter = PodDBAdapter.getInstance();
-        adapter.open();
-        try (FeedItemCursor cursor = new FeedItemCursor(adapter.getNextInQueue(item))) {
-            List<FeedItem> list = extractItemlistFromCursor(cursor);
-            if (!list.isEmpty()) {
-                FeedItem nextItem = list.get(0);
-                loadAdditionalFeedItemListData(list);
-                return nextItem;
+        try {
+            List<FeedItem> queue = getQueue(newestPerFeed);
+            for (int i = 0; i < queue.size(); i++) {
+                if (queue.get(i).getId() == item.getId()) {
+                    if (i + 1 < queue.size()) {
+                        return queue.get(i + 1);
+                    }
+                    break;
+                }
             }
             return null;
         } catch (Exception e) {
             return null;
-        } finally {
-            adapter.close();
         }
     }
 

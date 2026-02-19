@@ -532,7 +532,8 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
         disposable = Observable.fromCallable(() -> {
             boolean displayGoToInboxButton = DBReader.getTotalEpisodeCount(new FeedItemFilter(FeedItemFilter.NEW),
                     UserPreferences.isOnlyNewestPerFeedEnabled()) > 0;
-            return new Pair<>(DBReader.getQueue(), displayGoToInboxButton);
+            return new Pair<>(DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled()),
+                    displayGoToInboxButton);
         })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

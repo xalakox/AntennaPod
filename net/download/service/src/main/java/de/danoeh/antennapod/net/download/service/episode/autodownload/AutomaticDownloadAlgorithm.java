@@ -64,7 +64,7 @@ public class AutomaticDownloadAlgorithm {
                 }
 
                 if (UserPreferences.isEnableAutodownloadQueue()) {
-                    final List<FeedItem> queue = DBReader.getQueue();
+                    final List<FeedItem> queue = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
                     for (FeedItem item : queue) {
                         if (!candidates.contains(item)) {
                             candidates.add(item);

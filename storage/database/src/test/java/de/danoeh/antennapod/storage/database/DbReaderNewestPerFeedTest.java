@@ -224,6 +224,72 @@ public class DbReaderNewestPerFeedTest {
         assertEquals(2, ungroupedData.numNewItems);
     }
 
+    @Test
+    public void testGetQueueNewestPerFeedHidesOlderUnstartedItems() {
+        Feed feed = createFeed("feed-a");
+        feed.getItems().add(createItem(feed, "feed-a-old", 1000L, FeedItem.UNPLAYED));
+        feed.getItems().add(createItem(feed, "feed-a-new", 2000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        setQueue("feed-a-old", "feed-a-new");
+
+        List<FeedItem> queue = DBReader.getQueue(true);
+        Set<String> identifiers = getItemIdentifiers(queue);
+
+        assertEquals(1, queue.size());
+        assertTrue(identifiers.contains("feed-a-new"));
+    }
+
+    @Test
+    public void testGetQueueNewestPerFeedKeepsOlderStartedItems() {
+        Feed feed = createFeed("feed-a");
+        FeedItem oldStarted = createItem(feed, "feed-a-old-started", 1000L, FeedItem.UNPLAYED);
+        oldStarted.getMedia().setPosition(1200);
+        feed.getItems().add(oldStarted);
+        feed.getItems().add(createItem(feed, "feed-a-new", 2000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        setQueue("feed-a-old-started", "feed-a-new");
+
+        List<FeedItem> queue = DBReader.getQueue(true);
+        Set<String> identifiers = getItemIdentifiers(queue);
+
+        assertEquals(2, queue.size());
+        assertTrue(identifiers.contains("feed-a-old-started"));
+        assertTrue(identifiers.contains("feed-a-new"));
+    }
+
+    @Test
+    public void testGetQueueNewestPerFeedRespectsPerFeedDisabledOverride() {
+        Feed feed = createFeed("feed-a");
+        feed.getItems().add(createItem(feed, "feed-a-old", 1000L, FeedItem.UNPLAYED));
+        feed.getItems().add(createItem(feed, "feed-a-new", 2000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        setNewestEpisodesPerFeed(feed.getId(), FeedPreferences.NewestEpisodesPerFeed.DISABLED);
+        setQueue("feed-a-old", "feed-a-new");
+
+        List<FeedItem> queue = DBReader.getQueue(true);
+        Set<String> identifiers = getItemIdentifiers(queue);
+
+        assertEquals(2, queue.size());
+        assertTrue(identifiers.contains("feed-a-old"));
+        assertTrue(identifiers.contains("feed-a-new"));
+    }
+
+    @Test
+    public void testGetQueueNewestPerFeedRespectsPerFeedEnabledOverrideWhenGlobalDisabled() {
+        Feed feed = createFeed("feed-a");
+        feed.getItems().add(createItem(feed, "feed-a-old", 1000L, FeedItem.UNPLAYED));
+        feed.getItems().add(createItem(feed, "feed-a-new", 2000L, FeedItem.UNPLAYED));
+        FeedDatabaseWriter.updateFeed(context, feed, false);
+        setQueue("feed-a-old", "feed-a-new");
+        setNewestEpisodesPerFeed(feed.getId(), FeedPreferences.NewestEpisodesPerFeed.ENABLED);
+
+        List<FeedItem> queue = DBReader.getQueue(false);
+        Set<String> identifiers = getItemIdentifiers(queue);
+
+        assertEquals(1, queue.size());
+        assertTrue(identifiers.contains("feed-a-new"));
+    }
+
     private Feed createFeed(String slug) {
         Feed feed = new Feed("https://example.com/" + slug, null, "Feed " + slug);
         feed.setItems(new ArrayList<>());
@@ -252,6 +318,28 @@ public class DbReaderNewestPerFeedTest {
             }
         }
         throw new IllegalStateException("Identifier not found: " + identifier);
+    }
+
+    private FeedItem getItemByIdentifier(String identifier) {
+        List<FeedItem> allItems = DBReader.getEpisodes(0, 100, FeedItemFilter.unfiltered(),
+                SortOrder.DATE_NEW_OLD, false);
+        for (FeedItem item : allItems) {
+            if (identifier.equals(item.getItemIdentifier())) {
+                return item;
+            }
+        }
+        throw new IllegalStateException("Identifier not found: " + identifier);
+    }
+
+    private void setQueue(String... identifiers) {
+        List<FeedItem> queue = new ArrayList<>(identifiers.length);
+        for (String identifier : identifiers) {
+            queue.add(getItemByIdentifier(identifier));
+        }
+        PodDBAdapter adapter = PodDBAdapter.getInstance();
+        adapter.open();
+        adapter.setQueue(queue);
+        adapter.close();
     }
 
     private void setNewestEpisodesPerFeed(long feedId, FeedPreferences.NewestEpisodesPerFeed mode) {

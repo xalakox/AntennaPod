@@ -213,7 +213,7 @@ public class DBWriter {
      * Deleting media also removes the download log entries.
      */
     private static void deleteFeedItemsSynchronous(@NonNull Context context, @NonNull List<FeedItem> items) {
-        List<FeedItem> queue = DBReader.getQueue();
+        List<FeedItem> queue = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
         List<FeedItem> removedFromQueue = new ArrayList<>();
         for (FeedItem item : items) {
             if (queue.remove(item)) {
@@ -349,7 +349,7 @@ public class DBWriter {
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            final List<FeedItem> queue = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
 
             if (!itemListContains(queue, itemId)) {
                 FeedItem item = DBReader.getFeedItem(itemId);
@@ -385,7 +385,7 @@ public class DBWriter {
 
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            final List<FeedItem> queue = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
 
             List<FeedItem>  markAsUnplayed = new ArrayList<>();
             List<QueueEvent> events = new ArrayList<>();
@@ -492,7 +492,7 @@ public class DBWriter {
         }
         final PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        final List<FeedItem> queue = DBReader.getQueue();
+        final List<FeedItem> queue = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
 
         boolean queueModified = false;
         List<QueueEvent> events = new ArrayList<>();
@@ -573,7 +573,7 @@ public class DBWriter {
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            final List<FeedItem> queue = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
 
             if (from >= 0 && from < queue.size() && to >= 0 && to < queue.size()) {
                 final FeedItem item = queue.remove(from);
@@ -603,7 +603,7 @@ public class DBWriter {
 
         final PodDBAdapter adapter = PodDBAdapter.getInstance();
         adapter.open();
-        final List<FeedItem> queue = DBReader.getQueue();
+        final List<FeedItem> queue = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
 
         List<FeedItem> selectedItems = moveToTop ? new ArrayList<>(items) : items;
         if (moveToTop) {
@@ -884,7 +884,7 @@ public class DBWriter {
         return runOnDbThread(() -> {
             final PodDBAdapter adapter = PodDBAdapter.getInstance();
             adapter.open();
-            final List<FeedItem> queue = DBReader.getQueue();
+            final List<FeedItem> queue = DBReader.getQueue(UserPreferences.isOnlyNewestPerFeedEnabled());
 
             permutor.reorder(queue);
             adapter.setQueue(queue);
